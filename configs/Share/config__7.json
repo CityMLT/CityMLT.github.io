@@ -1,9 +1,0 @@
-{
-  "socialMedias": {
-    "email": true,
-    "facebook": false,
-    "twitter": true,
-    "googlePlus": true
-  },
-  "useOrgUrl": true
-}
