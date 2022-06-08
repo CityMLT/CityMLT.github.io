@@ -1,0 +1,83 @@
+\\mlts13\public\GIS_Data_Maps\2022 Map Projects\Map22_069_Laura's Stormwater Shed at 52nd Ave\QGIS\3d\index.html
+
+
+https://github.com/sirgeo/MLT_Plot_Plan_G/index.html
+
+
+https://github.com/sirgeo/MLT_Plot_Plan_G/blob/main/index.html
+
+https://sirgeo.github.io/threejs3D/tesla_pure_energy_ge.html
+https://sirgeo/MLT_Plot_Plan_G/index.html
+https://sirgeo.github.io/threejs3D/tesla_pure_energy_ge.html
+https://github.com/sirgeo/sirgeo.github.io/raw/master/Batch%20Reconcile%20and%20Post%20Versions%20-%20PY%20Script.zip
+
+https://github.com/sirgeo/sirgeo.github.io/tree/master/P_P_G
+https://github.com/sirgeo/sirgeo.github.io/tree/master/P_P_G/index.html 
+https://sirgeo.github.io/tree/master/P_P_G/index.html 
+
+https://sirgeo.github.io/P_P_G/widgets/AttributeTable/_ResourceManager.js?wab_dv=2.24
+
+THE FOLLOWING 2 LINKS ACT LIKE THEY WANT TO WORK:
+https://sirgeo.github.io/P_P_G/index.html
+https://sirgeo.github.io/P_P_G/
+https://sirgeo.github.io/P_P_G/readme.html
+https://sirgeo.github.io/p__p__g/index.html
+https://sirgeo.github.io/P_P_G/appinfo.json
+https://sirgeo.github.io/P_P_G/config.json
+https://sirgeo.github.io/Good_PPG_sans_AT/index.html
+
+
+https://my-app-jh3td.ondigitalocean.app/
+
+https://github.com/Esri/esri-loader
+
+ASK GITHUB SUPPORT ABOUT FIXING:
+"ENABLE CORS"
+CORS policy: No 'Access-Control-Allow-Origin'
+
+https://sirgeo.github.io/p%5F%5Fp%5F%5Fg/index.html
+
+http://timw1984.github.io/widget2/
+http://timw1984.github.io/WebApp%20-%20AdvDraw/
+http://timw1984.github.io
+
+
+************SOLUTION!:
+
+Not sure if removing the AttributeTable from widgets folder or using the following after right clicking on sirgeo.github.io'Git Bash Here' ended up solving all errors (also had to do the step of Synchronizing ('Allow Access') when prompted for GitHub online and Desktop to connect:
+*futher review seems to lean toward i simply forgot to hit PUSH after COMMIT in GitHub Desktop and removing the AttributeTable was the real fix.
+
+Create a new repo in GitHub: https://GitHub.com/new
+
+Copy the clone url, it ends with “.git”, use it in place of “URL” in commands below.
+
+Open your Terminal and type these commands:
+
+git init
+git add .
+git commit -m “initial commit”
+git remote add URL origin
+git push
+
+https://www.reddit.com/r/github/comments/mc3wti/can_someone_please_explain_how_to_upload_a/
+Do not put 'index.html' into the url, just the folder's path:
+https://sirgeo.github.io/Good_PPG_sans_AT/  <<<<<<< removed the ENTIRE AttributeTable folder from widgets folder and it runs with some limitations (Share widget throws errors, Basemap icons missing, etc.) Basemap icons were fixed by adding the png files into the folder where error shows they're missing
+https://sirgeo.github.io/Good_PPG_WAB_Dev_Edition/ <<<<<< removed nothing and spins forever
+https://sirgeo.github.io/Good_PPG_sans_RM/ <<<<<<< removed ONLY ResouceManager.js from AttributeTable folder in widgets folder <<<<< spins forever
+https://sirgeo.github.io/Good_PPG_sans_AT_SWfix <<<<<<<< removed several "_" from js file in dijit folder that throws 3 errors in Chrome's log when trying to run the Share Widget (_SingleFilterParameter.js , _filter , _Tree.js) <<<<< same Share Widget 3 errors showing "-" even though the "_" has been removed.
+https://sirgeo.github.io/Good_PPG_sans_AT_SWfix <<<<<<<< removed 2 js files and 1 folder in dijit folder that throws 3 errors in Chrome's log when trying to run the Share Widget (_SingleFilterParameter.js , _filter , _Tree.js) <<<<<<< <<<<< same Share Widget 3 errors showing 'Not Found'.
+
+https://sirgeo.github.io/Reddit_place/Reddit_place.html
+
+https://github.com/CityMLT/mlt.github.io
+https://CityMLT.github.io
+https://CityMLT.github.io
+https://CityMLT.github.io
+
+FOR BASEMAP ICON ERRORS:
+https://sirgeo.github.io/Good_PPG_sans_AT//configs/BasemapGallery/base64Img_widgets_BasemapGallery_Widget_29_2_1652991120150.png
+https://sirgeo.github.io/Good_PPG_sans_AT//configs/BasemapGallery/base64Img_widgets_BasemapGallery_Widget_29_1_1652991120136.png
+https://sirgeo.github.io/Good_PPG_sans_AT//configs/BasemapGallery/base64Img_widgets_BasemapGallery_Widget_29_2_1652991120150.png
+
+https://sirgeo.github.io/Good_PPG_sans_AT//configs/BasemapGallery/base64Img_widgets_BasemapGallery_Widget_29_1_1652991120136.png
+https://sirgeo.github.io/Good_PPG_sans_AT//configs/BasemapGallery/base64Img_widgets_BasemapGallery_Widget_29_2_1652991120150.png
