@@ -22,7 +22,7 @@
   "appId": "",
   "authorizedCrossOriginDomains": [],
   "title": "<div class=\"attribute-custom-style\"><font face=\"Tahoma\" size=\"4\"><b>City of Mountlake Terrace</b></font></div>",
-  "subtitle": "<div class=\"attribute-custom-style\"><p class=\"MsoNormal\"></p><p class=\"MsoNormal\"><b><font face=\"Arial\" size=\"1\"><br></font></b></p><p class=\"MsoNormal\"><font face=\"Arial\"><font size=\"4\"><b>PLOT PLAN GENERATOR</b> -</font><font size=\"5\"> </font><b><font size=\"4\">Find and/or Zoom to address then use </font></b><font color=\"#ff0000\"><b><font size=\"6\">PRINT</font></b><b> </b></font><b><font size=\"4\">and </font> </b><font size=\"6\">ℹ </font> <b><font size=\"4\">icons\nto create Plot Plan</font></b></font></p><p class=\"MsoNormal\"><img alt=\"\"><img alt=\"\"></p><p></p></div>",
+  "subtitle": "<div class=\"attribute-custom-style\"><p class=\"MsoNormal\"></p><p class=\"MsoNormal\"><b><font face=\"Arial\" size=\"1\"><br></font></b></p><p class=\"MsoNormal\"><font face=\"Arial\"><font size=\"4\"><b>PLOT PLAN GENERATOR</b> -</font><font size=\"5\"> </font><b><font size=\"4\">Find and/or Zoom to address then use </font></b><div class="strokeme"><font color=\"#ff0000\"><b><font size=\"6\">PRINT</font></b></div><b> </b></font><b><font size=\"4\">and </font> </b><font size=\"6\">ℹ </font> <b><font size=\"4\">icons\nto create Plot Plan</font></b></font></p><p class=\"MsoNormal\"><img alt=\"\"><img alt=\"\"></p><p></p></div>",
   "keepAppState": true,
   "logo": "images/logo.png",
   "geometryService": "https://utility.arcgisonline.com/arcgis/rest/services/Geometry/GeometryServer",
