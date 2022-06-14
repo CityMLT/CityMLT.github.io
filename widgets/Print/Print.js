@@ -1,19 +1,3 @@
-///////////////////////////////////////////////////////////////////////////
-// Copyright © Esri. All Rights Reserved.
-//
-// Licensed under the Apache License Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//    http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-///////////////////////////////////////////////////////////////////////////
-
 define([
   'dojo/_base/declare',
   'dijit/_WidgetBase',
@@ -24,9 +8,6 @@ define([
   "esri/tasks/PrintTemplate",
   "esri/request",
   'esri/lang',
-  'esri/arcgis/utils',
-  'esri/SpatialReference',
-  'dojo/_base/config',
   'dojo/_base/lang',
   'dojo/_base/array',
   'dojo/_base/html',
@@ -41,12 +22,9 @@ define([
   'dojo/aspect',
   'dojo/query',
   'jimu/LayerInfos/LayerInfos',
-  'jimu/dijit/LoadingIndicator',
+  'jimu/dijit/LoadingShelter',
   'jimu/dijit/Message',
   'jimu/utils',
-  'jimu/SpatialReference/srUtils',
-  'dojo/on',
-  'dijit/popup',
   'dijit/form/ValidationTextBox',
   'dijit/form/Form',
   'dijit/form/Select',
@@ -57,7 +35,6 @@ define([
   'dijit/form/DropDownButton',
   'dijit/TooltipDialog',
   'dijit/form/RadioButton',
-  'dijit/form/SimpleTextarea',
   'esri/IdentityManager',
   'dojo/store/Memory'
 ], function(
@@ -70,9 +47,6 @@ define([
   PrintTemplate,
   esriRequest,
   esriLang,
-  arcgisUtils,
-  SpatialReference,
-  dojoConfig,
   lang,
   array,
   html,
@@ -87,12 +61,9 @@ define([
   aspect,
   query,
   LayerInfos,
-  LoadingIndicator,
+  LoadingShelter,
   Message,
   utils,
-  srUtils,
-  on,
-  popup,
   ValidationTextBox) {
   // Main print dijit
   var PrintDijit = declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
@@ -103,7 +74,6 @@ define([
     results: [],
     authorText: null,
     copyrightText: null,
-    copyrightEditable: true,
     defaultTitle: null,
     defaultFormat: null,
     defaultLayout: null,
@@ -113,10 +83,6 @@ define([
     printTaskURL: null,
     printTask: null,
     async: false,
-    // showAdvancedOption: true,
-    _showSettings: false,
-
-    _currentTemplateInfo: null,
 
     postCreate: function() {
       this.inherited(arguments);
@@ -128,38 +94,18 @@ define([
       this.printTask = new PrintTask(this.printTaskURL, printParams);
       this.printparams = new PrintParameters();
       this.printparams.map = this.map;
-      //fix issue #7141
-      // this.printparams.outSpatialReference = this.map.spatialReference;
+      this.printparams.outSpatialReference = this.map.spatialReference;
 
-      this.shelter = new LoadingIndicator({
+      this.shelter = new LoadingShelter({
         hidden: true
       });
       this.shelter.placeAt(this.domNode);
       this.shelter.startup();
       this.shelter.show();
 
-      this.titleNode.set('value', this.defaultTitle);
-      this.authorNode.set('value', this.defaultAuthor);
-      this.copyrightNode.set('value', this.defaultCopyright);
-      this.copyrightNode.set('readOnly', !this.copyrightEditable);
-
-      srUtils.loadResource().then(lang.hitch(this, function() {
-        var wkidLabel;
-        if (srUtils.isValidWkid(this.map.spatialReference.wkid)) {
-          this.wkidInput.set('value', this.map.spatialReference.wkid);
-          wkidLabel = srUtils.getSRLabel(this.map.spatialReference.wkid);
-          this.wkidLabel.innerHTML = utils.sanitizeHTML(wkidLabel);
-          this.wkidLabel.title = wkidLabel;
-        } else {
-          this.wkidInput.set('value', '');
-          this.wkidLabel.innerHTML = '';
-          this.wkidLabel.title = '';
-        }
-        this.wkidInput.set('invalidMessage', this.nls.invalidWkid);
-        this.wkidInput.validator = function(value) {
-          return !value || value.trim() === '' || srUtils.isValidWkid(+value);
-        };
-      }));
+      this.titleNode.set('value', utils.sanitizeHTML(this.defaultTitle));
+      this.authorNode.set('value', utils.sanitizeHTML(this.defaultAuthor));
+      this.copyrightNode.set('value', utils.sanitizeHTML(this.defaultCopyright));
 
       var serviceUrl = portalUrlUtils.setHttpProtocol(this.printTaskURL);
       var portalNewPrintUrl = portalUrlUtils.getNewPrintUrl(this.appConfig.portalUrl);
@@ -169,20 +115,6 @@ define([
       var extentRadio = query('input', this.printWidgetMapExtent.domNode)[0];
       utils.combineRadioCheckBoxWithLabel(scaleRadio, this.printWidgetMapScaleLabel);
       utils.combineRadioCheckBoxWithLabel(extentRadio, this.printWidgetMapExtentLabel);
-
-      if (this.defaultLayout === 'MAP_ONLY') {
-        html.setStyle(this.titleTr, 'display', 'none');
-      } else {
-        html.setStyle(this.titleTr, 'display', '');
-      }
-
-      if (this._hasLabelLayer()) {
-        html.setStyle(this.labelsFormDijit.domNode, 'display', '');
-        html.setStyle(this.labelsTitleNode, 'display', '');
-      } else {
-        html.setStyle(this.labelsFormDijit.domNode, 'display', 'none');
-        html.setStyle(this.labelsTitleNode, 'display', 'none');
-      }
 
       LayerInfos.getInstance(this.map, this.map.itemInfo)
         .then(lang.hitch(this, function(layerInfosObj) {
@@ -226,37 +158,12 @@ define([
           false);
       }
       if (this.printTask._createOperationalLayers) {
-        // if opLayers contains markerSymbol of map.infoWindow, the print job will failed
-        aspect.after(
-          this.printTask,
-          '_createOperationalLayers',
-          lang.hitch(this, '_fixInvalidSymbol')
-        );
         aspect.after(
           this.printTask,
           '_createOperationalLayers',
           lang.hitch(this, '_excludeInvalidLegend')
         );
       }
-    },
-
-    _onOutputSRChange: function(newValue) {
-      var wkidLabel;
-      if (srUtils.isValidWkid(+newValue)) {
-        wkidLabel = srUtils.getSRLabel(+newValue);
-        this.wkidLabel.innerHTML = utils.sanitizeHTML(wkidLabel);
-        this.wkidLabel.title = wkidLabel;
-      } else {
-        this.wkidLabel.innerHTML = '';
-        this.wkidLabel.title = '';
-      }
-    },
-
-    _hasLabelLayer: function() {
-      return array.some(this.map.graphicsLayerIds, function(glid) {
-        var l = this.map.getLayer(glid);
-        return l && l.declaredClass === 'esri.layers.LabelLayer';
-      }, this);
     },
 
     _getPrintTaskInfo: function() {
@@ -270,7 +177,8 @@ define([
         esriRequest({
           url: this.printTaskURL,
           content: {
-            f: "json"
+            f: "json",
+            __preventCache__: new Date().getTime()
           },
           callbackParamName: "callback",
           handleAs: "json",
@@ -307,7 +215,8 @@ define([
         esriRequest({
           url: url,
           content: {
-            f: "json"
+            f: "json",
+            __preventCache__: new Date().getTime()
           },
           callbackParamName: "callback",
           handleAs: "json",
@@ -326,27 +235,6 @@ define([
       return def;
     },
 
-    _fixInvalidSymbol: function(opLayers) {
-      array.forEach(opLayers, function(ol) {
-        if (ol.id === 'map_graphics') {
-          var layers = lang.getObject('featureCollection.layers', false, ol);
-          if (layers && layers.length > 0) {
-            array.forEach(layers, function(layer) {
-              if (layer && layer.featureSet &&
-                layer.featureSet.geometryType === "esriGeometryPoint") {
-                array.forEach(layer.featureSet.features, function(f) {
-                  if (f && f.symbol && !f.symbol.style) {
-                    f.symbol.style = "esriSMSSquare";
-                  }
-                });
-              }
-            });
-          }
-        }
-      }, this);
-      return opLayers;
-    },
-
     _excludeInvalidLegend: function(opLayers) {
       function getSubLayerIds(legendLayer) {
         return array.filter(legendLayer.subLayerIds, lang.hitch(this, function(subLayerId) {
@@ -356,13 +244,6 @@ define([
       }
 
       if (this.printTask.allLayerslegend) {
-        var legends = arcgisUtils.getLegendLayers({map: this.map, itemInfo: this.map.itemInfo});
-        var legendLayersOfWebmap = array.map(legends, function(legend) {
-          return {
-            id: legend.layer.id
-          };
-        });
-
         var legendArray = this.printTask.allLayerslegend;
         var arr = [];
         for (var i = 0; i < legendArray.length; i++) {
@@ -371,32 +252,17 @@ define([
           var layerInfo = this.layerInfosObj.getLayerInfoById(legendLayer.id);
           var validLayerType = layer && layer.declaredClass &&
             layer.declaredClass !== "esri.layers.GraphicsLayer";
-          if (validLayerType) { // layer may be undefined
-            var validRenderer = !layer.renderer ||
-              (layer.renderer && !layer.renderer.hasVisualVariables());
-            var showLegendInMap = layerInfo && layerInfo.getShowLegendOfWebmap();
-            if (validRenderer && showLegendInMap) {
-              if (legendLayer.subLayerIds) {
-                legendLayer.subLayerIds = lang.hitch(this, getSubLayerIds, legendLayer)();
-              }
-
-              arr.push(legendLayer);
+          var validRenderer = !layer.renderer ||
+            (layer.renderer && !layer.renderer.hasVisualVariables());
+          var showLegendInMap = layerInfo && layerInfo.getShowLegendOfWebmap();
+          if (validLayerType && validRenderer && showLegendInMap) {
+            if (legendLayer.subLayerIds) {
+              legendLayer.subLayerIds = lang.hitch(this, getSubLayerIds, legendLayer)();
             }
+
+            arr.push(legendLayer);
           }
         }
-
-        // fix issue 6072
-        array.forEach(legendLayersOfWebmap, lang.hitch(this, function(legend) {
-          var inLegends = array.some(arr, lang.hitch(this, function(l) {
-            return l.id === legend.id;
-          }));
-          var layerInfo = this.layerInfosObj.getLayerInfoById(legend.id);
-          var showLegend = layerInfo && layerInfo.getShowLegendOfWebmap() &&
-            layerInfo.isShowInMap();
-          if (!inLegends && showLegend) {
-            arr.push(legend);
-          }
-        }));
         this.printTask.allLayerslegend = arr;
       }
       return opLayers;
@@ -421,113 +287,26 @@ define([
       var pos = this.templateNames && this.templateNames.indexOf(newValue);
       if (pos > -1) {
         html.empty(this.customTextElementsTable);
-        var templateInfo = this._currentTemplateInfo = this.templateInfos[pos];
-        var customTextElements =  lang.getObject(
-          "layoutOptions.customTextElements",
-          false, templateInfo);
+        var templateInfo = this.templateInfos[pos];
+        var customTextElements = templateInfo && templateInfo.layoutOptions &&
+          templateInfo.layoutOptions.customTextElements;
         if (customTextElements && customTextElements.length > 0) {
-          var textNames = [];
           array.forEach(customTextElements, lang.hitch(this, function(cte) {
             for (var p in cte) {
-              if (textNames.indexOf(p) < 0) {
-                var row = this.customTextElementsTable.insertRow(-1);
-                var cell0 = row.insertCell(-1);
-                cell0.appendChild(html.toDom(p + ': '));
-                var cell1 = row.insertCell(-1);
-                cell1.appendChild((new ValidationTextBox({
-                  name: p,
-                  trim: true,
-                  required: false,
-                  value: cte[p],
-                  style: 'width:100%'
-                })).domNode);
-                textNames.push(p);
-              }
+              var row = this.customTextElementsTable.insertRow(-1);
+              var cell0 = row.insertCell(-1);
+              cell0.appendChild(html.toDom(p + ': '));
+              var cell1 = row.insertCell(-1);
+              cell1.appendChild((new ValidationTextBox({
+                name: p,
+                trim: true,
+                required: false,
+                value: cte[p],
+                style: 'width:100%'
+              })).domNode);
             }
           }));
         }
-
-        var hasAuthorText = lang.getObject('layoutOptions.hasAuthorText', false, templateInfo);
-        if (!hasAuthorText) {
-          html.setStyle(this.authorTr, 'display', 'none');
-        } else {
-          html.setStyle(this.authorTr, 'display', '');
-        }
-        var hasCopyrightText = lang.getObject(
-          'layoutOptions.hasCopyrightText', false, templateInfo);
-        if (!hasCopyrightText) {
-          html.setStyle(this.copyrightTr, 'display', 'none');
-        } else {
-          html.setStyle(this.copyrightTr, 'display', '');
-        }
-        var hasTitleText = lang.getObject('layoutOptions.hasTitleText', false, templateInfo);
-        if (!hasTitleText) {
-          html.setStyle(this.titleTr, 'display', 'none');
-        } else {
-          html.setStyle(this.titleTr, 'display', '');
-        }
-        var hasLegend = lang.getObject('layoutOptions.hasLegend', false, templateInfo);
-        if (!hasLegend) {
-          html.setStyle(this.legendTr, 'display', 'none');
-        } else {
-          html.setStyle(this.legendTr, 'display', '');
-        }
-      } else if (newValue === 'MAP_ONLY') {
-        html.setStyle(this.authorTr, 'display', 'none');
-        html.setStyle(this.copyrightTr, 'display', 'none');
-        html.setStyle(this.titleTr, 'display', 'none');
-        html.setStyle(this.legendTr, 'display', 'none');
-
-        this._currentTemplateInfo = {
-          layoutOptions: {
-            hasTitleText: false,
-            hasCopyrightText: false,
-            hasAuthorText: false,
-            hasLegend: false
-          }
-        };
-      } else {
-        html.setStyle(this.authorTr, 'display', '');
-        html.setStyle(this.copyrightTr, 'display', '');
-        html.setStyle(this.titleTr, 'display', '');
-        html.setStyle(this.legendTr, 'display', '');
-        this._currentTemplateInfo = {
-          layoutOptions: {
-            hasTitleText: true,
-            hasCopyrightText: true,
-            hasAuthorText: true,
-            hasLegend: true
-          }
-        };
-      }
-    },
-
-    _getMapAttribution: function() {
-      var attr = this.map.attribution;
-      if (attr && attr.domNode) {
-        return html.getProp(attr.domNode, 'textContent');
-      } else {
-        return "";
-      }
-    },
-
-    closeSettings: function() {
-      popup.close(this.settingsDialog);
-      this._showSettings = false;
-    },
-
-    showSettings: function(event) {
-      event.preventDefault();
-      event.stopPropagation();
-      if (this._showSettings) {
-        popup.close(this.settingsDialog);
-        this._showSettings = false;
-      } else {
-        popup.open({
-          popup: this.settingsDialog,
-          around: this.advancedButtonDijit
-        });
-        this._showSettings = true;
       }
     },
 
@@ -535,30 +314,12 @@ define([
       if (!rData.isGPPrint) {
         domStyle.set(this.layoutDijit.domNode.parentNode.parentNode, 'display', 'none');
         domStyle.set(this.formatDijit.domNode.parentNode.parentNode, 'display', 'none');
-        domStyle.set(this.advancedButtonDijit, 'display', 'none');
+        domStyle.set(this.advancedButtonDijit.domNode, 'display', 'none');
       } else {
         var data = rData.data;
         domStyle.set(this.layoutDijit.domNode.parentNode.parentNode, 'display', '');
         domStyle.set(this.formatDijit.domNode.parentNode.parentNode, 'display', '');
-        domStyle.set(this.advancedButtonDijit, 'display', '');
-
-        this.own(on(document.body, 'click', lang.hitch(this, function (event) {
-          if (!this._showSettings) {
-            return;
-          }
-          var target = event.target || event.srcElement;
-          var node = this.settingsDialog.domNode;
-          var isInternal = target === node || html.isDescendant(target, node);
-          if (!isInternal) {
-            popup.close(this.settingsDialog);
-            this._showSettings = false;
-          }
-        })));
-        // if (this.showAdvancedOption) {
-        //   domStyle.set(this.advancedButtonDijit.domNode, 'display', '');
-        // } else {
-        //   domStyle.set(this.advancedButtonDijit.domNode, 'display', 'none');
-        // }
+        domStyle.set(this.advancedButtonDijit.domNode, 'display', '');
         var Layout_Template = array.filter(data.parameters, function(param) {
           return param.name === "Layout_Template";
         });
@@ -575,19 +336,11 @@ define([
         layoutItems.sort(function(a, b) {
           return (a.label > b.label) ? 1 : ((b.label > a.label) ? -1 : 0);
         });
-        if (layoutItems.length > 0) {
-          this.layoutDijit.addOption(layoutItems);
-          if (this.defaultLayout) {
-            this.layoutDijit.set('value', this.defaultLayout);
-          } else {
-            this.layoutDijit.set('value', Layout_Template[0].defaultValue);
-          }
-        } else if (this.defaultLayout) {
-          this.layoutDijit.addOption([{
-            label: this.defaultLayout,
-            value: this.defaultLayout
-          }]);
+        this.layoutDijit.addOption(layoutItems);
+        if (this.defaultLayout) {
           this.layoutDijit.set('value', this.defaultLayout);
+        } else {
+          this.layoutDijit.set('value', Layout_Template[0].defaultValue);
         }
 
         var Format = array.filter(data.parameters, function(param) {
@@ -598,6 +351,14 @@ define([
           return;
         }
         var formatItems = array.map(Format[0].choiceList, function(item) {
+//Remove the EPS, SVG, and SVGZ formats
+        if(item !== "EPS" && item !== "SVG" && item !== "SVGZ"){
+          return {
+            label: item,
+            value: item
+          };
+        }
+//end my change
           return {
             label: item,
             value: item
@@ -606,19 +367,11 @@ define([
         formatItems.sort(function(a, b) {
           return (a.label > b.label) ? 1 : ((b.label > a.label) ? -1 : 0);
         });
-        if (formatItems.length > 0) {
-          this.formatDijit.addOption(formatItems);
-          if (this.defaultFormat) {
-            this.formatDijit.set('value', this.defaultFormat);
-          } else {
-            this.formatDijit.set('value', Format[0].defaultValue);
-          }
-        } else if (this.defaultFormat) {
-          this.formatDijit.addOption([{
-            label: this.defaultFormat,
-            value: this.defaultFormat
-          }]);
+        this.formatDijit.addOption(formatItems);
+        if (this.defaultFormat) {
           this.formatDijit.set('value', this.defaultFormat);
+        } else {
+          this.formatDijit.set('value', Format[0].defaultValue);
         }
       }
     },
@@ -627,8 +380,6 @@ define([
       if (this.printSettingsFormDijit.isValid()) {
         var form = this.printSettingsFormDijit.get('value');
         lang.mixin(form, this.layoutMetadataDijit.get('value'));
-        lang.mixin(form, this.forceAttributesFormDijit.get('value'));
-        lang.mixin(form, this.labelsFormDijit.get('value'));
         this.preserve = this.preserveFormDijit.get('value');
         lang.mixin(form, this.preserve);
         this.layoutForm = this.layoutFormDijit.get('value');
@@ -637,61 +388,79 @@ define([
         lang.mixin(mapOnlyForm, mapQualityForm);
 
         var elementsObj = this.customTextElementsDijit.get('value');
-        var cteArray = [], hasDate = false, locale = dojoConfig.locale || 'en';
+        var cteArray = [];
         for (var p in elementsObj) {
           var cte = {};
-          if (p === 'Date') {
-            hasDate = true;
-          }
           cte[p] = elementsObj[p];
           cteArray.push(cte);
         }
-        if(!hasDate) {
-          cteArray.push({ Date: new Date().toLocaleString(locale) });
-        }
-
-        var templateInfo = this._currentTemplateInfo;
-        var hasAuthorText = lang.getObject('layoutOptions.hasAuthorText', false, templateInfo);
-        var hasCopyrightText = lang.getObject('layoutOptions.hasCopyrightText',
-          false, templateInfo);
-        var hasTitleText = lang.getObject('layoutOptions.hasTitleText', false, templateInfo);
 
         var template = new PrintTemplate();
         template.format = form.format;
         template.layout = form.layout;
         template.preserveScale = (form.preserveScale === 'true' || form.preserveScale === 'force');
-        if (form.preserveScale === 'force') {
-          template.outScale = this.preserve.forcedScale > 0 ? this.preserve.forcedScale : this.map.getScale();
-        }
-        template.forceFeatureAttributes = form.forceFeatureAttributes && form.forceFeatureAttributes[0];
         template.label = form.title;
         template.exportOptions = mapOnlyForm;
-        template.showLabels = form.showLabels && form.showLabels[0];
+//Hide map attribution
+        template.showAttribution = false;
+//end my change
         template.layoutOptions = {
-          authorText: hasAuthorText ? form.author : "",
-          copyrightText: hasCopyrightText ? (form.copyright || this._getMapAttribution()) : "",
-          legendLayers: this._getLegendLayers(), // fix issue 7744
-          titleText: hasTitleText ? form.title : "",
-          customTextElements: cteArray,
-          scalebarUnit: this.layoutForm.scalebarUnit
+          authorText: form.author,
+          copyrightText: form.copyright,
+          legendLayers: (this.layoutForm.legend.length > 0 && this.layoutForm.legend[0]) ?
+            null : [],
+          titleText: form.title,
+          customTextElements: cteArray
         };
+//See if there is a parcel search layer added to the map
+        var plyr;
+        array.some(this.map.graphicsLayerIds, lang.hitch(this, function (layerId) {
+          var lyr = this.map.getLayer(layerId);
+          if(lyr.name === "Search Results: Parcels"){
+            plyr = lyr;
+            return true;
+          }
+        }));
+        if(plyr){
+          var xppins = "", obj, cTextElements = [];
+          array.map(plyr.graphics, lang.hitch(this, function(gra, index){
+            if (plyr.graphics.length === 1){
+              obj = {OwnerName: "Owner Name: " + gra.attributes.NAME};
+              cTextElements.push(obj);
+              obj = {PPIN: "PPIN: " + gra.attributes.PPIN};
+              cTextElements.push(obj);
+              obj = {ParcelNum: "Parcel Number: " + gra.attributes.PARCEL_NUMBER};
+              cTextElements.push(obj);
+              obj = {StreetAdd: "Street Address: " + gra.attributes.STREET_ADDRESS};
+              cTextElements.push(obj);
+            }else if (plyr.graphics.length > 1){
+              if (xppins === ""){
+                xppins = gra.attributes.PPIN;
+              } else {
+                if([7,16,25,34,43,52,61,70,79,88,97].indexOf(index) > -1){
+                  xppins = xppins + ",\r\n" + gra.attributes.PPIN;
+                }else{
+                  xppins = xppins + ", " + gra.attributes.PPIN;
+                }
+              }
+              obj = {OwnerName: "Selected PPINs: " + xppins};
+              cTextElements.push(obj);
+            }
+            template.layoutOptions.customTextElements = cTextElements;
+          }));
+        }
+//end my change
         this.printparams.template = template;
         this.printparams.extraParameters = { // come from source code of jsapi
           printFlag: true
         };
-        // reset outSpatialReference
-        this.printparams.outSpatialReference = undefined;
-        var outWkid = +this.wkidInput.get('value');
-        if (srUtils.isValidWkid(outWkid) && outWkid !== this.map.spatialReference.wkid) {
-          this.printparams.outSpatialReference = new SpatialReference(outWkid);
-        }
         var fileHandel = this.printTask.execute(this.printparams);
 
         var result = new printResultDijit({
           count: this.count.toString(),
           icon: (form.format === "PDF") ? this.pdfIcon : this.imageIcon,
           docName: form.title,
-          title: form.title + ', ' + form.format + ', ' + form.layout,
+          title: form.format + ', ' + form.layout,
           fileHandle: fileHandel,
           nls: this.nls
         }).placeAt(this.printResultsNode, 'last');
@@ -700,27 +469,6 @@ define([
         this.count++;
       } else {
         this.printSettingsFormDijit.validate();
-      }
-    },
-
-    _getLegendLayers: function() {
-      var hasLegend = lang.getObject('layoutOptions.hasLegend', false, this._currentTemplateInfo);
-      var enabledLegend = this.layoutForm.legend.length > 0 && this.layoutForm.legend[0];
-      if (this.printTask && !this.printTask._createOperationalLayers) {
-        // if don't have _createOptionalLayers function
-        var legendLayers = [];
-        if (hasLegend && enabledLegend) {
-          var legends = arcgisUtils.getLegendLayers({map: this.map, itemInfo: this.map.itemInfo});
-          legendLayers = array.map(legends, function(legend) {
-            return {
-              layerId: legend.layer.id
-            };
-          });
-        }
-
-        return legendLayers;
-      } else {
-        return (hasLegend && enabledLegend) ? null : [];
       }
     },
 
@@ -749,7 +497,6 @@ define([
     url: null,
     postCreate: function() {
       this.inherited(arguments);
-      this.progressBar.set('label', this.nls.creatingPrint);
       this.fileHandle.then(lang.hitch(this, '_onPrintComplete'), lang.hitch(this, '_onPrintError'));
     },
     _onPrintComplete: function(data) {
