@@ -1,7 +1,0 @@
-{
-  "name": "Plot Plan Generator aka Utility Locator",
-  "description": "added 1 .nojekyll.txt file to project's parent folder and then removed the .txt using Git Bash:\nStep 1: Open Git Bash on the parent folder\nStep 2: Rename the file using the command:\ngit mv .nojekyll.txt .noje\nCommit & Push",
-  "createdTime": 1654278574668,
-  "lastUpdated": 1654816766380,
-  "creator": "PRussell_Cityofmlt"
-}
