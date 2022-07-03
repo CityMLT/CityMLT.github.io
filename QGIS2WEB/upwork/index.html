@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Add a raster tile source</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1Ijoibm91ZmVsZ2hheWF0aSIsImEiOiJja3lmNWZxOHYxZnU2MnVuMGx4NG15NzEzIn0.B3slQp7BqWvMfWqi3hVQrg';
+const map = new mapboxgl.Map({
+container: 'map',
+style: {
+'version': 8,
+'sources': {
+'raster-tiles': {
+'type': 'raster',
+'tiles': [
+'http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}'
+],
+'tileSize': 256,
+'attribution':
+'Map tiles by <a target="_top" rel="noopener" href="http://stamen.com">Stamen Design</a>, under <a target="_top" rel="noopener" href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a target="_top" rel="noopener" href="http://openstreetmap.org">OpenStreetMap</a>, under <a target="_top" rel="noopener" href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>'
+}
+},
+'layers': [
+{
+'id': 'simple-tiles',
+'type': 'raster',
+'source': 'raster-tiles',
+'minzoom': 0,
+'maxzoom': 22
+}
+],
+"glyphs": "mapbox://fonts/mapbox/{fontstack}/{range}.pbf"
+},
+center: [-122.33287045696153, 47.777796551883299],
+zoom: 12
+});
+
+map.on('load', () => {
+
+map.addSource('leaflet_address', {
+type: 'geojson',
+data: 'leaflet_address.geojson'
+});
+
+map.addSource('leaflet_bf', {
+type: 'geojson',
+data: 'leaflet_bf.geojson'
+});
+
+map.addSource('leaflet_driveways', {
+type: 'geojson',
+data: 'leaflet_driveways.geojson'
+});
+
+map.addSource('leaflet_edgepavement', {
+type: 'geojson',
+data: 'leaflet_edgepavement.geojson'
+});
+
+map.addSource('leaflet_parcel-dims', {
+type: 'geojson',
+data: 'leaflet_parcel-dims.geojson'
+});
+
+map.addSource('leaflet_sewer-mainlines-d', {
+type: 'geojson',
+data: 'leaflet_sewer-mainlines-d.geojson'
+});
+
+map.addSource('leaflet_sewer-services-d', {
+type: 'geojson',
+data: 'leaflet_sewer-services-d.geojson'
+});
+
+map.addSource('leaflet_snoco-parcels-sans-dups', {
+type: 'geojson',
+data: 'leaflet_snoco-parcels-sans-dups.geojson'
+});
+
+map.addSource('leaflet_storm-lines-d', {
+type: 'geojson',
+data: 'leaflet_storm-lines-d.geojson'
+});
+
+map.addSource('leaflet_water-mainlines-d', {
+type: 'geojson',
+data: 'leaflet_water-mainlines-d.geojson'
+});
+
+map.addSource('leaflet_water-services-d', {
+type: 'geojson',
+data: 'leaflet_water-services-d.geojson'
+});
+
+
+map.addLayer({
+'id': 'leaflet_water-services-d',
+'type': 'line',
+'source': 'leaflet_water-services-d',
+'paint': {
+'line-width': 0.86000,
+'line-color': '#3c90f1'
+}
+});
+
+map.addLayer({
+'id': 'leaflet_water-mainlines-d',
+'type': 'line',
+'source': 'leaflet_water-mainlines-d',
+'paint': {
+'line-width': 1.26000,
+'line-color': '#3c90f1'
+}
+});
+
+
+map.addLayer({
+'id': 'leaflet_storm-lines-d',
+'type': 'line',
+'source': 'leaflet_storm-lines-d',
+'paint': {
+'line-width': 1.06000,
+'line-color': '#d001ff'
+}
+});
+
+map.addLayer({
+'id': 'leaflet_snoco-parcels-sans-dups',
+'type': 'line',
+'source': 'leaflet_snoco-parcels-sans-dups',
+'paint': {
+'line-width': 0.96000,
+'line-color': '#a7a7a7'
+}
+});
+
+map.addLayer({
+'id': 'leaflet_sewer-services-d',
+'type': 'line',
+'source': 'leaflet_sewer-services-d',
+'paint': {
+'line-width': 0.86000,
+'line-color': '#23ff23'
+}
+});
+
+map.addLayer({
+'id': 'leaflet_sewer-mainlines-d',
+'type': 'line',
+'source': 'leaflet_sewer-mainlines-d',
+'paint': {
+'line-width': 1.26000,
+'line-color': '#3aff24'
+}
+});
+
+map.addLayer({
+'id': 'leaflet_parcel-dims',
+'type': 'line',
+'source': 'leaflet_parcel-dims',
+'paint': {
+'line-width': 0.86000,
+'line-color': '#ffff00'
+}
+});
+
+map.addLayer({
+'id': 'leaflet_edgepavement',
+'type': 'line',
+'source': 'leaflet_edgepavement',
+'paint': {
+'line-width': 1.060000,
+'line-color': '#000000'
+}
+});
+
+map.addLayer({
+'id': 'leaflet_driveways',
+'type': 'line',
+'source': 'leaflet_driveways',
+'paint': {
+'line-width': 0.66000,
+'line-color': '#a47158'
+}
+});
+
+map.addLayer({
+'id': 'leaflet_bf',
+'type': 'line',
+'source': 'leaflet_bf',
+'paint': {
+'line-width': 0.960000,
+'line-color': '#a7a7a7'
+}
+});
+
+map.addLayer({
+'id': 'leaflet_address',
+'type': 'symbol',
+'source': 'leaflet_address',
+'layout': {
+'text-field': ['get', 'SITUSHOUSE'],
+'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+'text-radial-offset': 0.5,
+'text-justify': 'auto',
+'text-size': 18
+},
+'paint': {
+'text-color': '#ffff00',
+'text-halo-color': '#000000',
+'text-halo-width': 2
+},
+'minzoom': 17
+});
+
+
+map.addControl(new mapboxgl.NavigationControl());
+});
+
+
+</script>
+ 
+</body>
+</html>
