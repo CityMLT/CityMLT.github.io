@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>For Paul</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.8.2/mapbox-gl.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="leaflet_address.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
+<script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+<link rel="stylesheet" href="w3.css" type="text/css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 2}
+#map1 { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 1}
+.changestyle {
+position: absolute;
+font-family: sans-serif;
+margin-top: 5px;
+margin-left: 5px;
+padding: 5px;
+width: 20%;
+font-size: 14px;
+color: #222;
+background-color: rgba(255, 255, 255, 0.8);
+border-radius: 3px;
+z-index: 3;
+}
+.layercheckbox {
+position: absolute;
+font-family: sans-serif;
+margin-top: 100px;
+margin-left: 5px;
+padding: 5px;
+width: 20%;
+font-size: 14px;
+color: #222;
+background-color: rgba(255, 255, 255, 0.8);
+border-radius: 3px;
+z-index: 3;
+}
+</style>
+</head>
+<body>
+	<div id="almightycontainer" style="width:100%; height:100%; position:absolute">
+<div id="map1"></div>
+<div id="map"></div>
+<div id="footer" style="width:100%; height:16%; position: absolute; bottom:0; left:0; background-color: rgba(255, 255, 255, 0.8); z-index: 3; display:none">
+<div class="w3-cell-row">
+	<div class="w3-container w3-cell w3-border" style="width:350px">
+	  <p style="font-size:8px"><b>NOTICE:</b> NO WARRANTY OF ACCURACY. THE INFORMATION SHOWN ON THIS MAP WAS COMPILED FOR USE BY THE CITY OF MOUNTLAKE TERRACE, ITS EMPLOYEES AND CONSULTANTS. THE CITY OF MOUNTLAKE TERRACE DOES NOT WARRANT THE ACCURACY OF ANYTHING SET FORTH IN THIS MAP. NEITHER THE CITY OF MOUNTLAKE TERRACE NOR ITS EMPLOYEES OR REPRESENTATIVES SHALL BE LIABLE FOR THE INFORMATION GIVEN ON THIS MAP, NOR FOR ANY ORAL REPRESENTATION PROVIDED BASED ON SAID MAP</p>
+	</div>
+	<div class="w3-container w3-cell w3-border">
+	  <p class="w3-center" id="titlee"><b>TITLE:  </b></p>
+	  <div style="font-size:10px"><img src="811.png" style="width:30px">  CALL BEFORE YOU DIG: 1-800-424-5555 (OR 811)</div>
+	</div>
+	<div class="w3-container w3-cell w3-border w3-center" style="">
+		<div><img src="logo.png" style="width:120px"></div>
+<div id="scalecontrol" class="w3-center" style="margin-top: 20px; margin-left: 20px"><img src="arrow.png" style="width:15px" id="north_arrow"></div>
+	  </div>
+  </div>
+</div>
+</div>
+<button id="Download" style="position: absolute; z-index:9; margin-top: 400px; margin-left: 5px;">PDF ↓</button>
+<a id="downloadLink" href="" download="map.png" style="position: absolute; z-index:9; display:none">Download ↓</a>
+<div class="changestyle">
+	<fieldset>
+		<legend>Select map style:</legend>
+		<div>
+		  <input type="radio" id="road" name="mapstyle" value="road" checked>
+		  <label for="road">Road</label>
+		</div>
+		<div>
+		  <input type="radio" id="hybrid" name="mapstyle" value="hybrid">
+		  <label for="hybrid">Hybrid</label>
+		</div>
+	</fieldset>
+	</div>
+	<div class="layercheckbox">
+		<fieldset>
+			<legend>Show/hide layers:</legend>
+			<div>
+				<input type="checkbox" id="leaflet_address" name="layers" value="leaflet_address" checked>
+				<label for="leaflet_address">Address</label>
+			</div>
+			<div>
+				<input type="checkbox" id="leaflet_bf" name="layers" value="leaflet_bf" checked>
+				<label for="leaflet_bf">BF</label>
+			</div>
+			<div>
+				<input type="checkbox" id="leaflet_driveways" name="layers" value="leaflet_driveways" checked>
+				<label for="leaflet_driveways">Driveways</label>
+			</div>
+			<div>
+				<input type="checkbox" id="leaflet_edgepavement" name="layers" value="leaflet_edgepavement" checked>
+				<label for="leaflet_edgepavement">Edge Pavement</label>
+			</div>
+			<div>
+				<input type="checkbox" id="leaflet_parcel-dims" name="layers" value="leaflet_parcel-dims" checked>
+				<label for="leaflet_parcel-dims">Pacel Dims</label>
+			</div>
+			<div>
+				<input type="checkbox" id="leaflet_sewer-mainlines-d" name="layers" value="leaflet_sewer-mainlines-d" checked>
+				<label for="leaflet_sewer-mainlines-d">Sewer Mainlines D</label>
+			</div>
+			<div>
+				<input type="checkbox" id="leaflet_sewer-services-d" name="layers" value="leaflet_sewer-services-d" checked>
+				<label for="leaflet_sewer-services-d">Sewer Services D</label>
+			</div>
+			<div>
+				<input type="checkbox" id="leaflet_snoco-parcels-sans-dups" name="layers" value="leaflet_snoco-parcels-sans-dups" checked>
+				<label for="leaflet_snoco-parcels-sans-dups">Snoco Parcels Sans dups</label>
+			</div>
+			<div>
+				<input type="checkbox" id="leaflet_storm-lines-d" name="layers" value="leaflet_storm-lines-d" checked>
+				<label for="leaflet_storm-lines-d">Storm lines D</label>
+			</div>
+			<div>
+				<input type="checkbox" id="leaflet_water-mainlines-d" name="layers" value="leaflet_water-mainlines-d" checked>
+				<label for="leaflet_water-mainlines-d">Water Mainlines D</label>
+			</div>
+			<div>
+				<input type="checkbox" id="leaflet_water-services-d" name="layers" value="leaflet_water-services-d" checked>
+				<label for="leaflet_water-services-d">Water Services D</label>
+			</div>
+		</fieldset>
+		</div>
+<script>
+	const { jsPDF } = window.jspdf
+mapboxgl.accessToken = 'pk.eyJ1Ijoibm91ZmVsZ2hheWF0aSIsImEiOiJja3lmNWZxOHYxZnU2MnVuMGx4NG15NzEzIn0.B3slQp7BqWvMfWqi3hVQrg';
+const map = new mapboxgl.Map({
+container: 'map',
+preserveDrawingBuffer: true,
+style: {
+'version': 8,
+'sources': {
+'raster-tiles': {
+'type': 'raster',
+'tiles': [
+'https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}'
+],
+'tileSize': 256
+}
+},
+'layers': [
+{
+'id': 'simple-tiles',
+'type': 'raster',
+'source': 'raster-tiles',
+'minzoom': 0,
+'maxzoom': 22
+}
+],
+"glyphs": "mapbox://fonts/mapbox/{fontstack}/{range}.pbf"
+},
+center: [-122.33287045696153, 47.777796551883299],
+zoom: 12
+});
+
+const map1 = new mapboxgl.Map({
+container: 'map1',
+preserveDrawingBuffer: true,
+style: {
+'version': 8,
+'sources': {
+'raster-tiles': {
+'type': 'raster',
+'tiles': [
+'https://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}'
+],
+'tileSize': 256
+}
+},
+'layers': [
+{
+'id': 'simple-tiles',
+'type': 'raster',
+'source': 'raster-tiles',
+'minzoom': 0,
+'maxzoom': 22
+}
+],
+"glyphs": "mapbox://fonts/mapbox/{fontstack}/{range}.pbf"
+},
+center: [-122.33287045696153, 47.777796551883299],
+zoom: 12
+});
+
+map1.on('load', () => {
+
+map.addSource('leaflet_address', {
+type: 'geojson',
+data: 'leaflet_address.geojson'
+});
+
+map.addSource('leaflet_bf', {
+type: 'geojson',
+data: 'leaflet_bf.geojson'
+});
+
+map.addSource('leaflet_driveways', {
+type: 'geojson',
+data: 'leaflet_driveways.geojson'
+});
+
+map.addSource('leaflet_edgepavement', {
+type: 'geojson',
+data: 'leaflet_edgepavement.geojson'
+});
+
+map.addSource('leaflet_parcel-dims', {
+type: 'geojson',
+data: 'leaflet_parcel-dims.geojson'
+});
+
+map.addSource('leaflet_sewer-mainlines-d', {
+type: 'geojson',
+data: 'leaflet_sewer-mainlines-d.geojson'
+});
+
+map.addSource('leaflet_sewer-services-d', {
+type: 'geojson',
+data: 'leaflet_sewer-services-d.geojson'
+});
+
+map.addSource('leaflet_snoco-parcels-sans-dups', {
+type: 'geojson',
+data: 'leaflet_snoco-parcels-sans-dups.geojson'
+});
+
+map.addSource('leaflet_storm-lines-d', {
+type: 'geojson',
+data: 'leaflet_storm-lines-d.geojson'
+});
+
+map.addSource('leaflet_water-mainlines-d', {
+type: 'geojson',
+data: 'leaflet_water-mainlines-d.geojson'
+});
+
+map.addSource('leaflet_water-services-d', {
+type: 'geojson',
+data: 'leaflet_water-services-d.geojson'
+});
+
+
+map.addLayer({
+'id': 'leaflet_water-services-d',
+'type': 'line',
+'source': 'leaflet_water-services-d',
+'paint': {
+'line-width': 0.86000,
+'line-color': '#3c90f1'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map.addLayer({
+'id': 'leaflet_water-mainlines-d',
+'type': 'line',
+'source': 'leaflet_water-mainlines-d',
+'paint': {
+'line-width': 1.26000,
+'line-color': '#3c90f1'
+},
+'layout': {'visibility': 'visible'}
+});
+
+
+map.addLayer({
+'id': 'leaflet_storm-lines-d',
+'type': 'line',
+'source': 'leaflet_storm-lines-d',
+'paint': {
+'line-width': 1.06000,
+'line-color': '#d001ff'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map.addLayer({
+'id': 'leaflet_snoco-parcels-sans-dups',
+'type': 'line',
+'source': 'leaflet_snoco-parcels-sans-dups',
+'paint': {
+'line-width': 0.96000,
+'line-color': '#a7a7a7'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map.addLayer({
+'id': 'leaflet_sewer-services-d',
+'type': 'line',
+'source': 'leaflet_sewer-services-d',
+'paint': {
+'line-width': 0.86000,
+'line-color': '#23ff23'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map.addLayer({
+'id': 'leaflet_sewer-mainlines-d',
+'type': 'line',
+'source': 'leaflet_sewer-mainlines-d',
+'paint': {
+'line-width': 1.26000,
+'line-color': '#3aff24'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map.addLayer({
+'id': 'leaflet_parcel-dims',
+'type': 'line',
+'source': 'leaflet_parcel-dims',
+'paint': {
+'line-width': 0.86000,
+'line-color': '#ffff00'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map.addLayer({
+'id': 'leaflet_edgepavement',
+'type': 'line',
+'source': 'leaflet_edgepavement',
+'paint': {
+'line-width': 1.060000,
+'line-color': '#000000'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map.addLayer({
+'id': 'leaflet_driveways',
+'type': 'line',
+'source': 'leaflet_driveways',
+'paint': {
+'line-width': 0.66000,
+'line-color': '#a47158'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map.addLayer({
+'id': 'leaflet_bf',
+'type': 'line',
+'source': 'leaflet_bf',
+'paint': {
+'line-width': 0.960000,
+'line-color': '#a7a7a7'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map.addLayer({
+'id': 'leaflet_address',
+'type': 'symbol',
+'source': 'leaflet_address',
+'layout': {
+'text-field': ['get', 'SITUSHOUSE'],
+'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+'text-radial-offset': 0.5,
+'text-justify': 'auto',
+'text-size': 18,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#ffff00',
+'text-halo-color': '#000000',
+'text-halo-width': 2
+},
+'minzoom': 17
+});
+
+map.addLayer({
+'id': 'leaflet_parcel-dims-label',
+'type': 'symbol',
+'source': 'leaflet_parcel-dims',
+'layout': {
+'symbol-placement': 'line',
+'text-variable-anchor': ["top", "bottom", "left", "right"],
+'text-justify': 'center',
+'text-field': ['get', 'new_length'],
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#000000'
+},
+'minzoom': 17
+});
+
+map.addLayer({
+'id': 'leaflet_sewer-mainlines-dd',
+'type': 'symbol',
+'source': 'leaflet_sewer-mainlines-d',
+'layout': {
+'text-field': "Sewer",
+'symbol-placement': 'line',
+'text-variable-anchor': ["top", "bottom", "left", "right"],
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#3aff24'
+},
+'minzoom': 17
+});
+
+map.addLayer({
+'id': 'leaflet_sewer-services-dd',
+'type': 'symbol',
+'source': 'leaflet_sewer-services-d',
+'layout': {
+'text-field': "Sewer",
+'symbol-placement': 'line',
+'text-variable-anchor': ["top", "bottom", "left", "right"],
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#23ff23'
+},
+'minzoom': 17
+});
+
+map.addLayer({
+'id': 'leaflet_water-mainlines-dd',
+'type': 'symbol',
+'source': 'leaflet_water-mainlines-d',
+'layout': {
+'text-field': "Water",
+'symbol-placement': 'line',
+'text-variable-anchor': ["top", "bottom", "left", "right"],
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#3c90f1'
+},
+'minzoom': 17
+});
+
+map.addLayer({
+'id': 'leaflet_water-services-dd',
+'type': 'symbol',
+'source': 'leaflet_water-services-d',
+'layout': {
+'text-field': "Water",
+'symbol-placement': 'line',
+'text-variable-anchor': ["top", "bottom", "left", "right"],
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#3c90f1'
+},
+'minzoom': 17
+});
+
+map.addLayer({
+'id': 'leaflet_storm-lines-dd',
+'type': 'symbol',
+'source': 'leaflet_storm-lines-d',
+'layout': {
+'text-field': "Storm",
+'symbol-placement': 'line',
+'text-variable-anchor': ["top", "bottom", "left", "right"],
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#d001ff'
+},
+'minzoom': 17
+});
+
+
+
+map1.addSource('leaflet_address1', {
+type: 'geojson',
+data: 'leaflet_address.geojson'
+});
+
+map1.addSource('leaflet_bf1', {
+type: 'geojson',
+data: 'leaflet_bf.geojson'
+});
+
+map1.addSource('leaflet_driveways1', {
+type: 'geojson',
+data: 'leaflet_driveways.geojson'
+});
+
+map1.addSource('leaflet_edgepavement1', {
+type: 'geojson',
+data: 'leaflet_edgepavement.geojson'
+});
+
+map1.addSource('leaflet_parcel-dims1', {
+type: 'geojson',
+data: 'leaflet_parcel-dims.geojson'
+});
+
+map1.addSource('leaflet_sewer-mainlines-d1', {
+type: 'geojson',
+data: 'leaflet_sewer-mainlines-d.geojson'
+});
+
+map1.addSource('leaflet_sewer-services-d1', {
+type: 'geojson',
+data: 'leaflet_sewer-services-d.geojson'
+});
+
+map1.addSource('leaflet_snoco-parcels-sans-dups1', {
+type: 'geojson',
+data: 'leaflet_snoco-parcels-sans-dups.geojson'
+});
+
+map1.addSource('leaflet_storm-lines-d1', {
+type: 'geojson',
+data: 'leaflet_storm-lines-d.geojson'
+});
+
+map1.addSource('leaflet_water-mainlines-d1', {
+type: 'geojson',
+data: 'leaflet_water-mainlines-d.geojson'
+});
+
+map1.addSource('leaflet_water-services-d1', {
+type: 'geojson',
+data: 'leaflet_water-services-d.geojson'
+});
+
+
+map1.addLayer({
+'id': 'leaflet_water-services-d1',
+'type': 'line',
+'source': 'leaflet_water-services-d1',
+'paint': {
+'line-width': 0.86000,
+'line-color': '#3c90f1'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map1.addLayer({
+'id': 'leaflet_water-mainlines-d1',
+'type': 'line',
+'source': 'leaflet_water-mainlines-d1',
+'paint': {
+'line-width': 1.26000,
+'line-color': '#3c90f1'
+},
+'layout': {'visibility': 'visible'}
+});
+
+
+map1.addLayer({
+'id': 'leaflet_storm-lines-d1',
+'type': 'line',
+'source': 'leaflet_storm-lines-d1',
+'paint': {
+'line-width': 1.06000,
+'line-color': '#d001ff'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map1.addLayer({
+'id': 'leaflet_snoco-parcels-sans-dups1',
+'type': 'line',
+'source': 'leaflet_snoco-parcels-sans-dups1',
+'paint': {
+'line-width': 0.96000,
+'line-color': '#a7a7a7'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map1.addLayer({
+'id': 'leaflet_sewer-services-d1',
+'type': 'line',
+'source': 'leaflet_sewer-services-d1',
+'paint': {
+'line-width': 0.86000,
+'line-color': '#23ff23'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map1.addLayer({
+'id': 'leaflet_sewer-mainlines-d1',
+'type': 'line',
+'source': 'leaflet_sewer-mainlines-d1',
+'paint': {
+'line-width': 1.26000,
+'line-color': '#3aff24'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map1.addLayer({
+'id': 'leaflet_parcel-dims1',
+'type': 'line',
+'source': 'leaflet_parcel-dims1',
+'paint': {
+'line-width': 0.86000,
+'line-color': '#ffff00'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map1.addLayer({
+'id': 'leaflet_edgepavement1',
+'type': 'line',
+'source': 'leaflet_edgepavement1',
+'paint': {
+'line-width': 1.060000,
+'line-color': '#000000'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map1.addLayer({
+'id': 'leaflet_driveways1',
+'type': 'line',
+'source': 'leaflet_driveways1',
+'paint': {
+'line-width': 0.66000,
+'line-color': '#a47158'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map1.addLayer({
+'id': 'leaflet_bf1',
+'type': 'line',
+'source': 'leaflet_bf1',
+'paint': {
+'line-width': 0.960000,
+'line-color': '#a7a7a7'
+},
+'layout': {'visibility': 'visible'}
+});
+
+map1.addLayer({
+'id': 'leaflet_address1',
+'type': 'symbol',
+'source': 'leaflet_address1',
+'layout': {
+'text-field': ['get', 'SITUSHOUSE'],
+'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+'text-radial-offset': 0.5,
+'text-justify': 'auto',
+'text-size': 18,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#ffff00',
+'text-halo-color': '#000000',
+'text-halo-width': 2
+},
+'minzoom': 17
+});
+
+map1.addLayer({
+'id': 'leaflet_parcel-dims-label1',
+'type': 'symbol',
+'source': 'leaflet_parcel-dims1',
+'layout': {
+'text-field': ['get', 'new_length'],
+'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+'text-radial-offset': 0.5,
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#000000'
+},
+'minzoom': 17
+});
+
+map1.addLayer({
+'id': 'leaflet_sewer-mainlines-d11',
+'type': 'symbol',
+'source': 'leaflet_sewer-mainlines-d1',
+'layout': {
+'text-field': "Sewer",
+'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+'text-radial-offset': 0.5,
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#3aff24'
+},
+'minzoom': 17
+});
+
+map1.addLayer({
+'id': 'leaflet_sewer-services-d11',
+'type': 'symbol',
+'source': 'leaflet_sewer-services-d1',
+'layout': {
+'text-field': "Sewer",
+'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+'text-radial-offset': 0.5,
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#23ff23'
+},
+'minzoom': 17
+});
+
+map1.addLayer({
+'id': 'leaflet_water-mainlines-d11',
+'type': 'symbol',
+'source': 'leaflet_water-mainlines-d1',
+'layout': {
+'text-field': "Water",
+'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+'text-radial-offset': 0.5,
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#3c90f1'
+},
+'minzoom': 17
+});
+
+map1.addLayer({
+'id': 'leaflet_water-services-d11',
+'type': 'symbol',
+'source': 'leaflet_water-services-d1',
+'layout': {
+'text-field': "Water",
+'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+'text-radial-offset': 0.5,
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#3c90f1'
+},
+'minzoom': 17
+});
+
+map1.addLayer({
+'id': 'leaflet_storm-lines-d11',
+'type': 'symbol',
+'source': 'leaflet_storm-lines-d1',
+'layout': {
+'text-field': "Storm",
+'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+'text-radial-offset': 0.5,
+'text-justify': 'auto',
+'text-size': 12,
+'visibility': 'visible'
+},
+'paint': {
+'text-color': '#d001ff'
+},
+'minzoom': 17
+});
+
+function myfunction(event) {
+	if(event.target.value === 'hybrid') {
+		$('#map').css("z-index", "1");
+		$('#map1').css("z-index", "2");
+		map1.setZoom(map.getZoom());
+		map1.setBearing(map.getBearing());
+		map1.setCenter(map.getCenter());
+	} else if (event.target.value === 'road') {
+		$('#map1').css("z-index", "1"); 
+		$('#map').css("z-index", "2");
+		map.setZoom(map1.getZoom());
+		map.setBearing(map1.getBearing());
+		map.setCenter(map1.getCenter());
+	}
+}
+function myfunction1(event) {
+	if(event.target.value === 'leaflet_address' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_address', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_address1', 'visibility', 'visible');} 
+	else if (event.target.value === 'leaflet_address' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_address', 'visibility', 'none'); map1.setLayoutProperty('leaflet_address1', 'visibility', 'none')} 
+	else if (event.target.value === 'leaflet_bf' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_bf', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_bf1', 'visibility', 'visible')} 
+	else if (event.target.value === 'leaflet_bf' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_bf', 'visibility', 'none'); map1.setLayoutProperty('leaflet_bf1', 'visibility', 'none')} 
+	else if (event.target.value === 'leaflet_driveways' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_driveways', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_driveways1', 'visibility', 'visible')} 
+	else if (event.target.value === 'leaflet_driveways' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_driveways', 'visibility', 'none'); map1.setLayoutProperty('leaflet_driveways1', 'visibility', 'none')} 
+	else if (event.target.value === 'leaflet_edgepavement' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_edgepavement', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_edgepavement1', 'visibility', 'visible')} 
+	else if (event.target.value === 'leaflet_edgepavement' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_edgepavement', 'visibility', 'none'); map1.setLayoutProperty('leaflet_edgepavement1', 'visibility', 'none')} 
+	else if (event.target.value === 'leaflet_parcel-dims' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_parcel-dims', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_parcel-dims1', 'visibility', 'visible')} 
+	else if (event.target.value === 'leaflet_parcel-dims' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_parcel-dims', 'visibility', 'none'); map1.setLayoutProperty('leaflet_parcel-dims1', 'visibility', 'none')} 
+	else if (event.target.value === 'leaflet_sewer-mainlines-d' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_sewer-mainlines-d', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_sewer-mainlines-d1', 'visibility', 'visible')} 
+	else if (event.target.value === 'leaflet_sewer-mainlines-d' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_sewer-mainlines-d', 'visibility', 'none'); map1.setLayoutProperty('leaflet_sewer-mainlines-d1', 'visibility', 'none')} 
+	else if (event.target.value === 'leaflet_sewer-services-d' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_sewer-services-d', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_sewer-services-d1', 'visibility', 'visible')} 
+	else if (event.target.value === 'leaflet_sewer-services-d' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_sewer-services-d', 'visibility', 'none'); map1.setLayoutProperty('leaflet_sewer-services-d1', 'visibility', 'none')} 
+	else if (event.target.value === 'leaflet_snoco-parcels-sans-dups' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_snoco-parcels-sans-dups', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_snoco-parcels-sans-dups1', 'visibility', 'visible')} 
+	else if (event.target.value === 'leaflet_snoco-parcels-sans-dups' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_snoco-parcels-sans-dups', 'visibility', 'none'); map1.setLayoutProperty('leaflet_snoco-parcels-sans-dups1', 'visibility', 'none')} 
+	else if (event.target.value === 'leaflet_storm-lines-d' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_storm-lines-d', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_storm-lines-d1', 'visibility', 'visible')} 
+	else if (event.target.value === 'leaflet_storm-lines-d' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_storm-lines-d', 'visibility', 'none'); map1.setLayoutProperty('leaflet_storm-lines-d1', 'visibility', 'none')} 
+	else if (event.target.value === 'leaflet_water-mainlines-d' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_water-mainlines-d', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_water-mainlines-d1', 'visibility', 'visible')} 
+	else if (event.target.value === 'leaflet_water-mainlines-d' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_water-mainlines-d', 'visibility', 'none'); map1.setLayoutProperty('leaflet_water-mainlines-d1', 'visibility', 'none')} 
+	else if (event.target.value === 'leaflet_water-services-d' && event.target.checked === true)
+	{map.setLayoutProperty('leaflet_water-services-d', 'visibility', 'visible'); map1.setLayoutProperty('leaflet_water-services-d1', 'visibility', 'visible')} 
+	else if (event.target.value === 'leaflet_water-services-d' && event.target.checked === false)
+	{map.setLayoutProperty('leaflet_water-services-d', 'visibility', 'none'); map1.setLayoutProperty('leaflet_water-services-d1', 'visibility', 'none')
+} 
+
+}
+
+document.querySelectorAll("input[name='mapstyle']").forEach((input) => {input.addEventListener('change', myfunction)});
+document.querySelectorAll("input[name='layers']").forEach((input) => {input.addEventListener('change', myfunction1)});
+
+map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+map1.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+function forwardGeocoder(query) {
+const matchingFeatures = [];
+for (const feature of addresses.features) {
+if (
+feature.properties.SITUSLINE1.toLowerCase().includes(query.toLowerCase())
+) {
+feature['place_name'] = `${feature.properties.SITUSLINE1}`;
+feature['center'] = feature.geometry.coordinates;
+matchingFeatures.push(feature);
+}
+}
+return matchingFeatures;
+}
+
+map.addControl(new MapboxGeocoder({
+accessToken: mapboxgl.accessToken,
+mapboxgl: mapboxgl,
+bbox: [-122.522278,47.297859,-121.950989,47.826064],
+localGeocoder: forwardGeocoder,
+localGeocoderOnly : true,
+placeholder: 'Search...'
+})
+);
+
+map1.addControl(new MapboxGeocoder({
+accessToken: mapboxgl.accessToken,
+mapboxgl: mapboxgl,
+bbox: [-122.522278,47.297859,-121.950989,47.826064],
+localGeocoder: forwardGeocoder,
+localGeocoderOnly : true,
+placeholder: 'Search...'
+})
+);
+
+map.addControl(new mapboxgl.ScaleControl({
+unit: 'imperial'
+}));
+
+
+$('.mapboxgl-ctrl-scale').detach().appendTo("#scalecontrol");
+
+$('#Download').click(function() {
+		$('.changestyle').css('display', 'none');
+		$('.layercheckbox').css('display', 'none');
+		$('.mapboxgl-ctrl-top-right').css('display', 'none');
+		$('.mapboxgl-ctrl-bottom-left').css('display', 'none');
+		$('.mapboxgl-ctrl-bottom-right').css('display', 'none');
+		$('#footer').css('display', 'block');
+		$.confirm({
+    title: 'Enter Title',
+    content: '' +
+    '<form action="" class="formName">' +
+    '<div class="form-group">' +
+    '<label>Enter Title:</label>' +
+    '<input type="text" placeholder="Title" class="title form-control" required />' +
+    '</div>' +
+    '</form>',
+    buttons: {
+        formSubmit: {
+            text: 'Submit',
+            btnClass: 'btn-blue',
+            action: function () {
+                var title = this.$content.find('.title').val();
+                if(!title){
+                    $.alert('provide a valid title');
+                    return false;
+                }
+				$("#titlee").html("<b>TITLE:  </b>" + title);
+				$("#north_arrow").css('-webkit-transform', 'rotate(-' + map.getBearing() + 'deg)');
+				$("#north_arrow").css('-moz-transform', 'rotate(-' + map.getBearing() + 'deg)');
+				$("#north_arrow").css('-ms-transform', 'rotate(-' + map.getBearing() + 'deg)');
+				$("#north_arrow").css('-o-transform', 'rotate(-' + map.getBearing() + 'deg)');
+				$("#north_arrow").css('transform', 'rotate(-' + map.getBearing() + 'deg)');
+				html2canvas(document.querySelector("#almightycontainer")).then(function (canvas) {
+				all = canvas.toDataURL('image/jpeg');
+				
+				pdf = new jsPDF({orientation: "landscape", unit: 'pt', format: [canvas.width, canvas.height]});
+				pdf.addImage(all, 'JPEG', 0, 0, canvas.width, canvas.height);
+				pdf.save("Project.pdf")
+			});
+		$('.changestyle').css('display', 'block');
+		$('.layercheckbox').css('display', 'block');
+		$('.mapboxgl-ctrl-top-right').css('display', 'block');
+		$('.mapboxgl-ctrl-bottom-left').css('display', 'block');
+		$('.mapboxgl-ctrl-bottom-right').css('display', 'block');
+		$('#footer').css('display', 'none');
+            }
+        }
+	},
+		onContentReady: function () {
+        // bind to events
+        var jc = this;
+        this.$content.find('form').on('submit', function (e) {
+            // if the user submits the form by pressing enter in the field.
+            e.preventDefault();
+            jc.$$formSubmit.trigger('click'); // reference the button and click it
+        });
+    }
+
+		});
+    })
+
+});
+
+
+</script>
+ 
+</body>
+</html>
